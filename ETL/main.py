@@ -1,55 +1,61 @@
+import json
+import logging
 import requests
 import sqlite3
-import json
 
-url = "https://jsonplaceholder.typicode.com/users"
-response = requests.get(url)
-if response.status_code == 200:
-    users = response.json()
+logging.basicConfig(level=logging.INFO)
 
-else:
-    print("Error Fetching data", response.status_code)
-    exit()
+try:
+    url = "https://jsonplaceholder.typicode.com/users"
+    response = requests.get(url)
+    if response.status_code == 200:
+        users = response.json()
 
-conn = sqlite3.connect("users.db")
-cursor = conn.cursor()
+    else:
+        print("Error Fetching data", response.status_code)
+        exit()
 
-#Creating table is not exists
-cursor.execute(
-    '''CREATE TABLE IF NOT EXISTS users(
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    username TEXT,
-    email TEXT,
-    address TEXT,
-    phone TEXT,
-    website TEXT,
-    company TEXT
-)
-'''
-)
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
 
-#Inserting data into the table
-for user in users:
-    cursor.execute('SELECT 1 FROM users WHERE id = ?', (user['id'],))
-    exists = cursor.fetchone()
+    #Creating table is not exists
+    cursor.execute(
+        '''CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        username TEXT,
+        email TEXT,
+        address TEXT,
+        phone TEXT,
+        website TEXT,
+        company TEXT
+    )
+    '''
+    )
 
-    if not exists:
-        cursor.execute(
-            '''INSERT INTO users(id, name, username, email, address, phone, website, company)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?)''',
-            (
-                user['id'],
-                user['name'],
-                user['username'],
-                user['email'],
-                json.dumps(user['address']),
-                user['phone'],
-                user['website'],
-                json.dumps(user['company'])
+    #Inserting data into the table
+    for user in users:
+        cursor.execute('SELECT 1 FROM users WHERE id = ?', (user['id'],))
+        exists = cursor.fetchone()
+
+        if not exists:
+            cursor.execute(
+                '''INSERT INTO users(id, name, username, email, address, phone, website, company)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    user['id'],
+                    user['name'],
+                    user['username'],
+                    user['email'],
+                    json.dumps(user['address']),
+                    user['phone'],
+                    user['website'],
+                    json.dumps(user['company'])
+                )
             )
-        )
 
-conn.commit()
-conn.close()
-print("Data Inserted Successfully!!!")
+    conn.commit()
+    conn.close()
+    print("Data Inserted Successfully!!!")
+except Exception as e:
+    logging.error(f"Something went Wrong: {e}")
